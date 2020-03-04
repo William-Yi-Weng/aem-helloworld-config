@@ -1,6 +1,9 @@
 # Packer AEM is used to retrieve the IDs of the latest AMIs created by Packer AEM itself
 packer_aem_version=4.11.1
 
+# Aem Helloworld User Aws Resources is used to retrieve the IDs of kms from AWS
+aem_helloworld_user_aws_resources_version=0.9.0
+
 ci: clean deps gen-packer-aem gen-aem-aws-stack-builder lint
 
 clean:
@@ -11,9 +14,13 @@ stage:
 
 deps: stage
 	pip install -r requirements.txt
-	mkdir -p stage/packer-aem/
-	curl -L -o "stage/packer-aem/packer-aem-${packer_aem_version}.tar.gz" "https://github.com/shinesolutions/packer-aem/releases/download/${packer_aem_version}/packer-aem-${packer_aem_version}.tar.gz"
-	cd stage/packer-aem && tar -xvzf "packer-aem-${packer_aem_version}.tar.gz" && make deps
+	mkdir -p stage/packer-aem/ stage/aem-helloworld-user-aws-resources
+#	curl -L -o "stage/packer-aem/packer-aem-${packer_aem_version}.tar.gz" "https://github.com/shinesolutions/packer-aem/releases/download/${packer_aem_version}/packer-aem-${packer_aem_version}.tar.gz"
+#	cd stage/packer-aem && tar -xvzf "packer-aem-${packer_aem_version}.tar.gz" && make deps
+	git clone https://github.com/William-Yi-Weng/aem-helloworld-user-aws-resources.git stage/aem-helloworld-user-aws-resources
+#	curl -L -o "stage/aem-helloworld-user-aws-resources/aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz" "https://github.com/shinesolutions/aem-helloworld-user-aws-resources/releases/download/${aem_helloworld_user_aws_resources_version}/aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz"
+#	cd stage/aem-helloworld-user-aws-resources && tar -xvzf "aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz" && make deps
+	cd stage/aem-helloworld-user-aws-resources && make deps
 
 lint:
 	yamllint \
@@ -69,6 +76,7 @@ define gen_packer_aem
 	cp packer-aem/src/platform-$(1).yaml packer-aem/$(1)-$(2)-$(3)/
 	cp packer-aem/src/os-$(2).yaml packer-aem/$(1)-$(2)-$(3)/
 	cp packer-aem/src/$(3).yaml packer-aem/$(1)-$(2)-$(3)/
+	cp packer-aem/src/packer-kms-key-ids.yaml packer-aem/$(1)-$(2)-$(3)/
 endef
 
 define gen_packer_aem_aws_resources
@@ -113,6 +121,7 @@ define gen_aem_aws_stack_builder
 	cp aem-aws-stack-builder/src/apps/aem/$(1)*-$(2)-stack-builder-ami-ids.yaml aem-aws-stack-builder/aem-$(3)-$(2)-$(1)/
 	cp aem-aws-stack-builder/src/apps/aem/$(3).yaml aem-aws-stack-builder/aem-$(3)-$(2)-$(1)/
 	cp aem-aws-stack-builder/src/apps/aem/$(3)-$(4).yaml aem-aws-stack-builder/aem-$(3)-$(2)-$(1)/
+	cp aem-aws-stack-builder/src/apps/aem/stack-builder-kms-key-ids.yaml aem-aws-stack-builder/aem-$(3)-$(2)-$(1)/
 endef
 
 define gen_aem_aws_stack_builder_aem_stack_manager
@@ -158,5 +167,17 @@ define gen_aem_aws_stack_builder_ami_ids
 	cd stage/packer-aem/ && version="ci-master-aws-*" make clean ami-ids config_path=../../packer-aem/$(1)-$(2)-$(3)/
 	cp stage/packer-aem/stage/stack-builder-configs/*.yaml aem-aws-stack-builder/src/apps/aem/
 endef
+
+gen-aem-aws-stack-builder-kms-key-ids: stage
+	rm -f aem-aws-stack-builder/src/apps/aem/stack-builder-kms-key-ids.yaml
+	cd stage/aem-helloworld-user-aws-resources/ && make clean gen-kms-keys
+	cp stage/aem-helloworld-user-aws-resources/stage/user-config/stack-builder*.yaml aem-aws-stack-builder/src/apps/aem/
+	make gen-aem-aws-stack-builder
+
+gen-packer-aem-kms-key-ids: stage
+	rm -f aem-aws-stack-builder/src/apps/aem/packer-kms-key-ids.yaml
+	cd stage/aem-helloworld-user-aws-resources/ && make clean gen-kms-keys
+	cp stage/aem-helloworld-user-aws-resources/stage/user-config/packer*.yaml packer-aem/src/
+	make gen-packer-aem
 
 .PHONY: ci clean stage deps lint gen-packer-aem gen-aem-aws-stack-builder gen-aem-aws-stack-builder-ami-ids
