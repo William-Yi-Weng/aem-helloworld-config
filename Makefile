@@ -15,12 +15,11 @@ stage:
 deps: stage
 	pip install -r requirements.txt
 	mkdir -p stage/packer-aem/ stage/aem-helloworld-user-aws-resources
-#	curl -L -o "stage/packer-aem/packer-aem-${packer_aem_version}.tar.gz" "https://github.com/shinesolutions/packer-aem/releases/download/${packer_aem_version}/packer-aem-${packer_aem_version}.tar.gz"
-#	cd stage/packer-aem && tar -xvzf "packer-aem-${packer_aem_version}.tar.gz" && make deps
+	curl -L -o "stage/packer-aem/packer-aem-${packer_aem_version}.tar.gz" "https://github.com/shinesolutions/packer-aem/releases/download/${packer_aem_version}/packer-aem-${packer_aem_version}.tar.gz"
+	cd stage/packer-aem && tar -xvzf "packer-aem-${packer_aem_version}.tar.gz" && make deps
 	git clone https://github.com/William-Yi-Weng/aem-helloworld-user-aws-resources.git stage/aem-helloworld-user-aws-resources
-#	curl -L -o "stage/aem-helloworld-user-aws-resources/aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz" "https://github.com/shinesolutions/aem-helloworld-user-aws-resources/releases/download/${aem_helloworld_user_aws_resources_version}/aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz"
-#	cd stage/aem-helloworld-user-aws-resources && tar -xvzf "aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz" && make deps
-	cd stage/aem-helloworld-user-aws-resources && make deps
+	curl -L -o "stage/aem-helloworld-user-aws-resources/aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz" "https://github.com/shinesolutions/aem-helloworld-user-aws-resources/releases/download/${aem_helloworld_user_aws_resources_version}/aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz"
+	cd stage/aem-helloworld-user-aws-resources && tar -xvzf "aem-helloworld-user-aws-resources-${aem_helloworld_user_aws_resources_version}.tar.gz" && make deps
 
 lint:
 	yamllint \
